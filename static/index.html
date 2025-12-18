@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiducia v4.0.3</title>
+    <title>Fiducia v4.0.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -184,9 +184,20 @@
         
         var API_BASE = '';  // Change if your API is elsewhere
         var APP_NAME = 'Fiducia';
-        var APP_VERSION = '4.0.3';
+        var APP_VERSION = '4.0.4';
 
         var CHANGELOG = [
+            {
+                version: '4.0.4',
+                date: '2025-12-18',
+                changes: [
+                    'Fixed: Consistent UTC timestamps throughout application (was mixing local and UTC time)',
+                    'Fixed: Unix timestamp parsing now uses UTC instead of local time',
+                    'Added: Single-session login enforcement - logging in from a new device automatically logs out previous sessions',
+                    'Added: UserSession model for tracking active sessions',
+                    'Security: Session tokens embedded in JWT for server-side session validation'
+                ]
+            },
             {
                 version: '4.0.3',
                 date: '2025-12-17',
