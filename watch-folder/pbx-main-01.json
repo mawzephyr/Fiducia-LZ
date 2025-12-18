@@ -1,0 +1,51 @@
+{
+  "asset_name": "pbx-main-01",
+  "fqdn": "pbx-main-01.corp.local",
+  "timestamp": "2025-12-15T03:25:55.236484",
+  "group": "telecom",
+  "os": "Asterisk PBX",
+  "version_string": "21.0.0",
+  "firmware": "N/A",
+  "local_users": [
+    "root",
+    "asterisk",
+    "admin",
+    "voiceadmin"
+  ],
+  "local_users_string": "root, asterisk, admin, voiceadmin",
+  "ports_services": [
+    22,
+    5060,
+    5061,
+    8088,
+    8089,
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    20000,
+    20001,
+    20002,
+    20003,
+    20004,
+    20005
+  ],
+  "ports_services_string": "22/tcp (ssh), 5060/udp (sip), 5061/tcp (sips), 8088/tcp (http-ami), 8089/tcp (https-ami), 10000-10010/udp (rtp-audio), 20000-20005/udp (rtp-video)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "asterisk",
+    "freepbx",
+    "fail2ban",
+    "srtp"
+  ],
+  "installed_software_string": "Asterisk 21.0.0, FreePBX 17.0.10, fail2ban 1.0.2, libsrtp2 2.5.0"
+}

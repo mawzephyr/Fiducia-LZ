@@ -1,0 +1,35 @@
+{
+  "asset_name": "srv-mail-01",
+  "fqdn": "srv-mail-01.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "server",
+  "os": "Ubuntu 22.04 LTS",
+  "version_string": "22.04.4",
+  "firmware": "N/A",
+  "local_users": [
+    "root",
+    "admin",
+    "postfix",
+    "dovecot"
+  ],
+  "local_users_string": "root, admin, postfix, dovecot",
+  "ports_services": [
+    22,
+    25,
+    143,
+    465,
+    587,
+    993
+  ],
+  "ports_services_string": "22/tcp (ssh), 25/tcp (smtp), 143/tcp (imap), 465/tcp (smtps), 587/tcp (submission), 993/tcp (imaps)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "postfix",
+    "dovecot",
+    "spamassassin",
+    "opendkim"
+  ],
+  "installed_software_string": "postfix 3.6.4, dovecot 2.3.16, spamassassin 4.0.0, opendkim 2.11.0"
+}

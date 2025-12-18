@@ -1,0 +1,25 @@
+{
+  "asset_name": "vm-uc-01",
+  "fqdn": "vm-uc-01.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "telecom",
+  "os": "Cisco Unity Connection",
+  "version_string": "15.0.1.10000-5",
+  "firmware": "N/A",
+  "local_users": [
+    "administrator",
+    "clonadmin"
+  ],
+  "local_users_string": "administrator (admin), clonadmin (admin)",
+  "ports_services": [
+    22,
+    443,
+    8443
+  ],
+  "ports_services_string": "22/tcp (ssh), 443/tcp (https), 8443/tcp (admin)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [],
+  "installed_software_string": "Unity Connection 15.0, 500 User License"
+}

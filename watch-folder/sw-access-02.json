@@ -1,0 +1,24 @@
+{
+  "asset_name": "sw-access-02",
+  "fqdn": "sw-access-02.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "network",
+  "os": "Cisco IOS",
+  "version_string": "15.2(7)E7",
+  "firmware": "15.2(7)E7",
+  "local_users": [
+    "admin",
+    "netops"
+  ],
+  "local_users_string": "admin (priv 15), netops (priv 15)",
+  "ports_services": [
+    22,
+    161
+  ],
+  "ports_services_string": "22/tcp (ssh), 161/udp (snmp)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [],
+  "installed_software_string": "LAN Base"
+}

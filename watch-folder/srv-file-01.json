@@ -1,0 +1,31 @@
+{
+  "asset_name": "srv-file-01",
+  "fqdn": "srv-file-01.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "server",
+  "os": "Windows Server 2022",
+  "version_string": "21H2 Build 20348",
+  "firmware": "N/A",
+  "local_users": [
+    "Administrator",
+    "svc_backup",
+    "svc_antivirus"
+  ],
+  "local_users_string": "Administrator, svc_backup, svc_antivirus",
+  "ports_services": [
+    135,
+    139,
+    445,
+    3389
+  ],
+  "ports_services_string": "135/tcp (rpc), 139/tcp (netbios), 445/tcp (smb), 3389/tcp (rdp)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "Windows Defender",
+    "Veeam Agent",
+    "7-Zip"
+  ],
+  "installed_software_string": "Windows Defender 4.18, Veeam Agent 6.0, 7-Zip 23.01"
+}

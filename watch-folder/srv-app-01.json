@@ -1,0 +1,31 @@
+{
+  "asset_name": "srv-app-01",
+  "fqdn": "srv-app-01.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "server",
+  "os": "Rocky Linux 9.3",
+  "version_string": "9.3",
+  "firmware": "N/A",
+  "local_users": [
+    "root",
+    "admin",
+    "appuser",
+    "deploy"
+  ],
+  "local_users_string": "root, admin, appuser, deploy",
+  "ports_services": [
+    22,
+    8080,
+    8443
+  ],
+  "ports_services_string": "22/tcp (ssh), 8080/tcp (http-alt), 8443/tcp (https-alt)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "java-17-openjdk",
+    "tomcat",
+    "prometheus-node-exporter"
+  ],
+  "installed_software_string": "java-17-openjdk 17.0.9, tomcat 10.1.18, node_exporter 1.7.0"
+}

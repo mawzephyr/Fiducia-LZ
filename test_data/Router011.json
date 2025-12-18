@@ -1,0 +1,14 @@
+{
+    "fqdn": "router01.example.com",
+    "version": "15.2.4",
+    "ports_services_string": [
+        "22/tcp SSH",
+        "443/tcp HTTPS",
+        "161/udp SNMP"
+    ],
+    "config": {
+        "hostname": "Router01",
+        "domain": "example.com",
+        "ntp_servers": ["10.0.0.1", "10.0.0.2"]
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "asset_name": "gw-analog-01",
+  "fqdn": "gw-analog-01.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "telecom",
+  "os": "Cisco IOS",
+  "version_string": "15.9(3)M7",
+  "firmware": "15.9(3)M7",
+  "local_users": [
+    "admin",
+    "voiceadmin"
+  ],
+  "local_users_string": "admin (priv 15), voiceadmin (priv 15)",
+  "ports_services": [
+    22,
+    161,
+    2000
+  ],
+  "ports_services_string": "22/tcp (ssh), 161/udp (snmp), 2000/tcp (sccp)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [],
+  "installed_software_string": "Voice Gateway, 8 FXO Ports, 4 FXS Ports"
+}

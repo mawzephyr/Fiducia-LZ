@@ -1,0 +1,25 @@
+{
+  "asset_name": "wlc-main-01",
+  "fqdn": "wlc-main-01.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "network",
+  "os": "Cisco AireOS",
+  "version_string": "8.10.185.0",
+  "firmware": "8.10.185.0",
+  "local_users": [
+    "admin",
+    "wifiadmin"
+  ],
+  "local_users_string": "admin (read-write), wifiadmin (read-write)",
+  "ports_services": [
+    22,
+    443,
+    5246
+  ],
+  "ports_services_string": "22/tcp (ssh), 443/tcp (https), 5246/udp (capwap)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [],
+  "installed_software_string": "Base License, AP Count: 50"
+}

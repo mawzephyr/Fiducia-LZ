@@ -1,0 +1,36 @@
+{
+  "asset_name": "srv-web-01",
+  "fqdn": "srv-web-01.corp.local",
+  "timestamp": "2025-12-15T03:25:55.236484",
+  "group": "server",
+  "os": "Ubuntu 24.04 LTS",
+  "version_string": "24.04.2",
+  "firmware": "N/A",
+  "local_users": [
+    "root",
+    "admin",
+    "webadmin",
+    "deploy",
+    "contractor1"
+  ],
+  "local_users_string": "root, admin, webadmin, deploy, contractor1",
+  "ports_services": [
+    22,
+    80,
+    443,
+    8080,
+    9090
+  ],
+  "ports_services_string": "22/tcp (ssh), 80/tcp (http), 443/tcp (https), 8080/tcp (http-proxy), 9090/tcp (prometheus)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "nginx",
+    "php8.2",
+    "certbot",
+    "fail2ban",
+    "prometheus-node-exporter"
+  ],
+  "installed_software_string": "nginx 1.24.0, php8.2-fpm, certbot 2.6.0, fail2ban 1.0.2, node_exporter 1.7.0"
+}

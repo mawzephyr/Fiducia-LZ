@@ -1,0 +1,34 @@
+{
+  "asset_name": "srv-db-01",
+  "fqdn": "srv-db-01.corp.local",
+  "timestamp": "2025-12-15T03:25:55.236484",
+  "group": "server",
+  "os": "Ubuntu 22.04 LTS",
+  "version_string": "22.04.4",
+  "firmware": "N/A",
+  "local_users": [
+    "root",
+    "admin",
+    "postgres",
+    "backup"
+  ],
+  "local_users_string": "root, admin, postgres, backup",
+  "ports_services": [
+    22,
+    5432,
+    6379,
+    9187
+  ],
+  "ports_services_string": "22/tcp (ssh), 5432/tcp (postgresql), 6379/tcp (redis), 9187/tcp (postgres_exporter)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "postgresql-16",
+    "pgbackrest",
+    "pg_stat_statements",
+    "redis-server",
+    "postgres_exporter"
+  ],
+  "installed_software_string": "postgresql-16.2, pgbackrest 2.50, pg_stat_statements, redis-server 7.2.4, postgres_exporter 0.15.0"
+}

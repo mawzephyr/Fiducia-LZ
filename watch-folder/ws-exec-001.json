@@ -1,0 +1,29 @@
+{
+  "asset_name": "ws-exec-001",
+  "fqdn": "ws-exec-001.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "desktop",
+  "os": "macOS Sonoma",
+  "version_string": "14.2.1",
+  "firmware": "N/A",
+  "local_users": [
+    "admin",
+    "ceo"
+  ],
+  "local_users_string": "admin, ceo",
+  "ports_services": [
+    22,
+    5900
+  ],
+  "ports_services_string": "22/tcp (ssh), 5900/tcp (vnc)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "Microsoft 365",
+    "Zoom",
+    "1Password",
+    "Jamf Connect"
+  ],
+  "installed_software_string": "Microsoft 365 16.80, Zoom 5.17, 1Password 8.10, Jamf Connect 2.28"
+}

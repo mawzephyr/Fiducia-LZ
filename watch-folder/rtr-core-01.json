@@ -1,0 +1,29 @@
+{
+  "asset_name": "rtr-core-01",
+  "fqdn": "rtr-core-01.corp.local",
+  "timestamp": "2025-12-15T03:25:55.236484",
+  "group": "network",
+  "os": "Cisco IOS-XE",
+  "version_string": "17.09.05",
+  "firmware": "17.09.05",
+  "local_users": [
+    "admin",
+    "netops",
+    "readonly",
+    "noc_monitor"
+  ],
+  "local_users_string": "admin (priv 15), netops (priv 15), readonly (priv 1), noc_monitor (priv 5)",
+  "ports_services": [
+    22,
+    161,
+    443,
+    830,
+    3000
+  ],
+  "ports_services_string": "22/tcp (ssh), 161/udp (snmp), 443/tcp (https), 830/tcp (netconf), 3000/tcp (grafana-agent)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [],
+  "installed_software_string": "IOS-XE Base, Security K9, IP Base, NETCONF/YANG"
+}

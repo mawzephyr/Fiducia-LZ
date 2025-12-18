@@ -1,0 +1,29 @@
+{
+  "asset_name": "fw-edge-01",
+  "fqdn": "fw-edge-01.corp.local",
+  "timestamp": "2025-12-15T03:25:55.236484",
+  "group": "network",
+  "os": "Palo Alto PAN-OS",
+  "version_string": "11.1.3",
+  "firmware": "11.1.3-h1",
+  "local_users": [
+    "admin",
+    "secops",
+    "readonly",
+    "vendor_support"
+  ],
+  "local_users_string": "admin (superuser), secops (superuser), readonly (read-only), vendor_support (device-admin)",
+  "ports_services": [
+    22,
+    443,
+    3978,
+    5008,
+    28443
+  ],
+  "ports_services_string": "22/tcp (ssh), 443/tcp (https-mgmt), 3978/tcp (panorama), 5008/tcp (user-id-agent), 28443/tcp (gp-portal-alt)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP), 192.168.1.11:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [],
+  "installed_software_string": "Threat Prevention, URL Filtering, WildFire, GlobalProtect, DNS Security"
+}

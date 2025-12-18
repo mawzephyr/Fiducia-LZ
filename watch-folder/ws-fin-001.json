@@ -1,0 +1,31 @@
+{
+  "asset_name": "ws-fin-001",
+  "fqdn": "ws-fin-001.corp.local",
+  "timestamp": "2025-12-15T01:23:43.611593",
+  "group": "desktop",
+  "os": "Windows 11 Pro",
+  "version_string": "23H2 Build 22631",
+  "firmware": "N/A",
+  "local_users": [
+    "Administrator",
+    "agarcia",
+    "localadmin"
+  ],
+  "local_users_string": "Administrator, agarcia, localadmin",
+  "ports_services": [
+    135,
+    445,
+    3389
+  ],
+  "ports_services_string": "135/tcp (rpc), 445/tcp (smb), 3389/tcp (rdp)",
+  "syslog": "192.168.1.10:514",
+  "syslog_string": "192.168.1.10:514 (UDP)",
+  "ntp": "time.corp.local",
+  "installed_software": [
+    "Microsoft 365",
+    "QuickBooks",
+    "Adobe Acrobat Pro",
+    "Zoom"
+  ],
+  "installed_software_string": "Microsoft 365 16.0, QuickBooks 2024, Adobe Acrobat Pro 2023, Zoom 5.17"
+}
