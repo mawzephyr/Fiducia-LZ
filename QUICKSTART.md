@@ -310,14 +310,11 @@ Fiducia supports LDAP authentication:
 | Facility | Syslog facility (LOCAL0-7) |
 | Event Types | 26 configurable event types to forward |
 
-### CIP-010 Compliance Schedule
+### Compliance Settings
 | Setting | Description |
 |---------|-------------|
-| Check Schedule | When to run automated checks (Day 1, 15, etc.) |
-| Compliance Window | Days allowed for investigation (default: 35) |
-| Warning Threshold | Days remaining to show warning (default: 14) |
-| Critical Threshold | Days remaining for critical alert (default: 7) |
-| Auto-Investigate | Auto-escalate unreviewed changes |
+| Compliance Window | Days allowed for investigation (default: 35, set via COMPLIANCE_WINDOW_DAYS env var) |
+| Check Schedule | Automated checks run on Day 1 and 15 by default (set via SCHEDULED_CHECK_DAYS env var) |
 
 ### Database Configuration
 | Setting | Description |
@@ -472,4 +469,4 @@ For issues or feature requests:
 
 ---
 
-*Fiducia v3.7.5 - Infrastructure Baseline Management*
+*Fiducia v4.0.5 - Infrastructure Baseline Management*

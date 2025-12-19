@@ -193,7 +193,8 @@
                 changes: [
                     'Fixed: Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates',
                     'Fixed: Broken duplicate-detection logic that never found existing changes',
-                    'Improved: Change tracking maintains one pending change per field, preserving original baseline and compliance deadline'
+                    'Improved: Change tracking maintains one pending change per field, preserving original baseline and compliance deadline',
+                    'Removed: CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule)'
                 ]
             },
             {
@@ -8841,7 +8842,7 @@ date: '2025-12-15',
                                 <ul class="list-disc list-inside space-y-1 text-sm text-gray-400">
                                     <li>View scheduler status</li>
                                     <li>Manually trigger compliance check</li>
-                                    <li>Configure check days (default: 1st and 15th)</li>
+                                    <li>Checks run on 1st and 15th of each month by default</li>
                                 </ul>
                             </div>
 

@@ -146,6 +146,7 @@ Designed for organizations managing infrastructure baselines under NERC CIP-010 
 - **Fixed:** Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates
 - **Fixed:** Broken duplicate-detection logic that never found existing changes (was checking new_snapshot_id which is always unique)
 - **Improved:** Change tracking now maintains one pending change per field, updating with latest value while preserving original baseline reference and compliance deadline
+- **Removed:** CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule of 1st and 15th)
 
 ### v4.0.4 (2025-12-18)
 - **Fixed:** Consistent UTC timestamps throughout application (was mixing local and UTC time)
