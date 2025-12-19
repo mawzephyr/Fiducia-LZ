@@ -3,7 +3,7 @@
 
 **Infrastructure Baseline Management & Compliance Engine**
 
-Created by [Michael Wooten](https://github.com/mawzephyr)
+Created by [Michael Wooten] and Claude(https://github.com/mawzephyr)
 
 Fiducia is a web-based tool for tracking configuration baselines across critical infrastructure assets. Built for CIP-010 compliance workflows, it enables teams to detect changes, review modifications, and maintain auditable records of approved configurations.
 
