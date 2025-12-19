@@ -1,4 +1,4 @@
-<!-- Fiducia v4.0.4 -->
+<!-- Fiducia v4.0.5 -->
 # Fiducia
 
 **Infrastructure Baseline Management & Compliance Engine**
@@ -141,6 +141,11 @@ DATABASE_URL=mssql+pyodbc://user:password@localhost/fiducia?driver=ODBC+Driver+1
 Designed for organizations managing infrastructure baselines under NERC CIP-010 or similar regulatory frameworks requiring documented change control and periodic configuration verification.
 
 ## Changelog
+
+### v4.0.5 (2025-12-18)
+- **Fixed:** Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates
+- **Fixed:** Broken duplicate-detection logic that never found existing changes (was checking new_snapshot_id which is always unique)
+- **Improved:** Change tracking now maintains one pending change per field, updating with latest value while preserving original baseline reference and compliance deadline
 
 ### v4.0.4 (2025-12-18)
 - **Fixed:** Consistent UTC timestamps throughout application (was mixing local and UTC time)

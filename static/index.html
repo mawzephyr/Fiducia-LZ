@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiducia v4.0.4</title>
+    <title>Fiducia v4.0.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -184,9 +184,18 @@
         
         var API_BASE = '';  // Change if your API is elsewhere
         var APP_NAME = 'Fiducia';
-        var APP_VERSION = '4.0.4';
+        var APP_VERSION = '4.0.5';
 
         var CHANGELOG = [
+            {
+                version: '4.0.5',
+                date: '2025-12-18',
+                changes: [
+                    'Fixed: Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates',
+                    'Fixed: Broken duplicate-detection logic that never found existing changes',
+                    'Improved: Change tracking maintains one pending change per field, preserving original baseline and compliance deadline'
+                ]
+            },
             {
                 version: '4.0.4',
                 date: '2025-12-18',
@@ -199,8 +208,8 @@
                 ]
             },
             {
-                version: '4.0.4',
-                date: '2025-12-18',
+                version: '4.0.3',
+                date: '2025-12-17',
                 changes: [
                     'UI text update: Date picker now says "Select date for the reports to the right"',
                     'Bug fix: Removed orphaned event handler for deleted Historical View button'

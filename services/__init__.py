@@ -1,4 +1,4 @@
-# Fiducia v4.0.4
+# Fiducia v4.0.5
 """
 Services package for CIP-010 Baseline Engine.
 Contains background services for file watching and scheduling.

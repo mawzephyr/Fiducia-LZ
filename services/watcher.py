@@ -293,22 +293,37 @@ class WatcherService:
                         db.add(new_snapshot)
                         db.flush()
                         
-                        # Create change records
+                        # Create or update change records (supersede existing pending changes)
                         for change in result.changes:
-                            change_record = Change(
-                                asset_id=asset.id,
-                                field_path=change.path,
-                                change_type=change.change_type.value,
-                                old_value=json.dumps(change.old_value) if change.old_value else None,
-                                new_value=json.dumps(change.new_value) if change.new_value else None,
-                                items_added=json.dumps(change.items_added) if change.items_added else None,
-                                items_removed=json.dumps(change.items_removed) if change.items_removed else None,
-                                status=ChangeStatus.PENDING,
-                                change_signature=change.signature,
-                                old_snapshot_id=current_baseline.id,
-                                new_snapshot_id=new_snapshot.id
-                            )
-                            db.add(change_record)
+                            existing = db.query(Change).filter(
+                                Change.asset_id == asset.id,
+                                Change.status.in_([ChangeStatus.PENDING, ChangeStatus.INVESTIGATION]),
+                                Change.field_path == change.path
+                            ).first()
+
+                            if existing:
+                                # Supersede: Update existing change with new value
+                                existing.new_value = json.dumps(change.new_value) if change.new_value else None
+                                existing.items_added = json.dumps(change.items_added) if change.items_added else None
+                                existing.items_removed = json.dumps(change.items_removed) if change.items_removed else None
+                                existing.new_snapshot_id = new_snapshot.id
+                                existing.change_signature = change.signature
+                                existing.change_type = change.change_type.value
+                            else:
+                                change_record = Change(
+                                    asset_id=asset.id,
+                                    field_path=change.path,
+                                    change_type=change.change_type.value,
+                                    old_value=json.dumps(change.old_value) if change.old_value else None,
+                                    new_value=json.dumps(change.new_value) if change.new_value else None,
+                                    items_added=json.dumps(change.items_added) if change.items_added else None,
+                                    items_removed=json.dumps(change.items_removed) if change.items_removed else None,
+                                    status=ChangeStatus.PENDING,
+                                    change_signature=change.signature,
+                                    old_snapshot_id=current_baseline.id,
+                                    new_snapshot_id=new_snapshot.id
+                                )
+                                db.add(change_record)
                         
                         logger.info(f"Created {len(result.changes)} pending changes for {parsed_file.asset_name}")
                 

@@ -1,4 +1,4 @@
-# Fiducia v4.0.4
+# Fiducia v4.0.5
 """
 API package for CIP-010 Baseline Engine.
 """
