@@ -229,21 +229,17 @@ async def review_change(
     # If approved, promote the new baseline
     if new_status == ChangeStatus.APPROVED:
         _promote_change(db, change, current_user)
-    
-    # Generate report first to get the ID
-    report_id = _generate_change_report(db, change, review.status, current_user)
 
     # Get asset info for audit log
     asset = db.query(Asset).filter(Asset.id == change.asset_id).first()
-    
-    # Audit log with report link
+
+    # Audit log (report generated at finalization, not here)
     audit = AuditLog(
         user_id=current_user.id,
         action=f"change_{review.status}",
         action_detail=f"{asset.asset_name if asset else 'Unknown'}: {change.field_path} - {review.status}" + (f" (Ticket: {review.ticket_number})" if review.ticket_number else ""),
         asset_id=change.asset_id,
         change_id=change.id,
-        report_id=report_id,
         asset_name=asset.asset_name if asset else None,
         details_json=json.dumps({
             "field": change.field_path,
@@ -330,11 +326,8 @@ async def bulk_review_by_signature(
         asset = db.query(Asset).filter(Asset.id == change.asset_id).first()
         if asset:
             affected_assets.append({"id": asset.id, "name": asset.asset_name})
-    
-    # Generate bulk report first to get the ID
-    report_id = _generate_bulk_report(db, changes, review.status, current_user, affected_assets)
 
-    # Audit log with report link
+    # Audit log (report generated at finalization, not here)
     audit = AuditLog(
         user_id=current_user.id,
         action=f"bulk_{review.status}",
@@ -344,8 +337,7 @@ async def bulk_review_by_signature(
             "signature": review.signature,
             "ticket_number": review.ticket_number,
             "resolution_notes": review.resolution_notes
-        }),
-        report_id=report_id
+        })
     )
     db.add(audit)
 
@@ -507,12 +499,34 @@ async def finalize_all_approved(
     # Generate promotion summary report
     promotion_summary = _generate_promotion_summary(finalized_assets, current_user.username)
 
-    # Audit log with full details
-    audit = None
+    # Create consolidated finalization report in database
+    report_id = None
     if finalized_assets:
         total_changes = sum(a['changes_finalized'] for a in finalized_assets)
         investigation_closures = [a for a in finalized_assets if a.get('investigation_closed')]
 
+        # Build report title
+        if investigation_closures:
+            report_title = f"Investigation Closure Report - {len(finalized_assets)} assets, {total_changes} changes"
+        else:
+            report_title = f"Finalization Report - {len(finalized_assets)} assets, {total_changes} changes"
+
+        # Create the consolidated report
+        report = Report(
+            report_type=ReportType.FINALIZATION,
+            title=report_title,
+            report_content=promotion_summary,
+            generated_by=current_user.username,
+            related_assets=json.dumps([a['id'] for a in finalized_assets]),
+            related_changes=json.dumps([])  # Changes are deleted after finalization
+        )
+        db.add(report)
+        db.flush()  # Get the report ID
+        report_id = report.id
+
+    # Audit log with full details
+    audit = None
+    if finalized_assets:
         if investigation_closures:
             action_detail = (f"Closed {len(investigation_closures)} investigation(s) - asset(s) restored to compliance. "
                             f"Finalized {len(finalized_assets)} assets with {total_changes} total changes.")
@@ -523,6 +537,7 @@ async def finalize_all_approved(
             user_id=current_user.id,
             action="finalize_baselines",
             action_detail=action_detail,
+            report_id=report_id,
             details_json=json.dumps({
                 "finalized_assets": finalized_assets,
                 "investigations_closed": investigation_closures
@@ -554,8 +569,34 @@ async def finalize_all_approved(
         "message": f"Finalized {len(finalized_assets)} assets",
         "finalized_assets": finalized_assets,
         "promotion_summary": promotion_summary,
-        "audit_log_id": audit_log_id
+        "audit_log_id": audit_log_id,
+        "report_id": report_id
     }
+
+
+def _format_value_for_report(val, indent="    "):
+    """Format a value for display in reports, handling dicts, lists, and primitives."""
+    if val is None:
+        return "(none)"
+    if isinstance(val, dict):
+        # Format dict as key: value pairs
+        items = []
+        for k, v in val.items():
+            items.append(f"{indent}{k}: {v}")
+        return "\n".join(items) if items else "(empty object)"
+    if isinstance(val, list):
+        if not val:
+            return "(empty list)"
+        # Format list items
+        items = []
+        for item in val:
+            if isinstance(item, dict):
+                item_str = ", ".join(f"{k}: {v}" for k, v in item.items())
+                items.append(f"{indent}• {{ {item_str} }}")
+            else:
+                items.append(f"{indent}• {item}")
+        return "\n".join(items)
+    return str(val)
 
 
 def _generate_promotion_summary(finalized_assets: list, username: str) -> str:
@@ -596,33 +637,74 @@ def _generate_promotion_summary(finalized_assets: list, username: str) -> str:
 
         for change in asset.get('changes', []):
             lines.append("")
-            lines.append(f"  Field: {change['field']}")
-            lines.append(f"  Type:  {change['change_type']}")
+            lines.append(f"  ┌─ Field: {change['field']}")
+            lines.append(f"  │  Type:  {change['change_type'].upper().replace('_', ' ')}")
 
-            old_val = change.get('old_value')
-            new_val = change.get('new_value')
+            change_type = change.get('change_type', '').lower()
 
-            # Format values for display
-            if isinstance(old_val, list):
-                old_val = ", ".join(str(v) for v in old_val)
-            if isinstance(new_val, list):
-                new_val = ", ".join(str(v) for v in new_val)
+            # Handle array_modified changes with items_added/items_removed
+            if change_type == 'array_modified':
+                items_added = change.get('items_added') or []
+                items_removed = change.get('items_removed') or []
 
-            if old_val is not None:
-                lines.append(f"  Old:   {old_val}")
-            if new_val is not None:
-                lines.append(f"  New:   {new_val}")
+                if items_removed:
+                    lines.append(f"  │")
+                    lines.append(f"  │  ─ REMOVED ({len(items_removed)} items):")
+                    for item in items_removed:
+                        if isinstance(item, dict):
+                            item_str = ", ".join(f"{k}: {v}" for k, v in item.items())
+                            lines.append(f"  │      - {{ {item_str} }}")
+                        else:
+                            lines.append(f"  │      - {item}")
 
+                if items_added:
+                    lines.append(f"  │")
+                    lines.append(f"  │  + ADDED ({len(items_added)} items):")
+                    for item in items_added:
+                        if isinstance(item, dict):
+                            item_str = ", ".join(f"{k}: {v}" for k, v in item.items())
+                            lines.append(f"  │      + {{ {item_str} }}")
+                        else:
+                            lines.append(f"  │      + {item}")
+            else:
+                # Standard old/new value display
+                old_val = change.get('old_value')
+                new_val = change.get('new_value')
+
+                lines.append(f"  │")
+                lines.append(f"  │  BEFORE:")
+                if old_val is None:
+                    lines.append(f"  │    (none)")
+                elif isinstance(old_val, (dict, list)):
+                    formatted = _format_value_for_report(old_val, "  │    ")
+                    lines.append(formatted)
+                else:
+                    lines.append(f"  │    {old_val}")
+
+                lines.append(f"  │")
+                lines.append(f"  │  AFTER:")
+                if new_val is None:
+                    lines.append(f"  │    (none)")
+                elif isinstance(new_val, (dict, list)):
+                    formatted = _format_value_for_report(new_val, "  │    ")
+                    lines.append(formatted)
+                else:
+                    lines.append(f"  │    {new_val}")
+
+            lines.append(f"  │")
             if change.get('ticket_number'):
-                lines.append(f"  Ticket #: {change['ticket_number']}")
+                lines.append(f"  │  Ticket #: {change['ticket_number']}")
             if change.get('approved_by'):
-                lines.append(f"  Approved By: {change['approved_by']} at {change.get('approved_at', 'N/A')}")
+                lines.append(f"  │  Approved By: {change['approved_by']}")
+            if change.get('approved_at'):
+                lines.append(f"  │  Approved At: {change['approved_at']}")
             if change.get('detected_at'):
-                lines.append(f"  Detected:    {change['detected_at']}")
+                lines.append(f"  │  Detected:    {change['detected_at']}")
             if change.get('time_to_close_days') is not None:
-                lines.append(f"  Time to Close: {change['time_to_close_days']} days")
+                lines.append(f"  │  Time to Close: {change['time_to_close_days']} days")
             if change.get('resolution_notes'):
-                lines.append(f"  Notes: {change['resolution_notes']}")
+                lines.append(f"  │  Notes: {change['resolution_notes']}")
+            lines.append(f"  └" + "─" * 50)
 
     lines.append("")
     lines.append("=" * 70)

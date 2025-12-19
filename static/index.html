@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiducia v4.0.5</title>
+    <title>Fiducia v4.0.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -184,7 +184,7 @@
         
         var API_BASE = '';  // Change if your API is elsewhere
         var APP_NAME = 'Fiducia';
-        var APP_VERSION = '4.0.5';
+        var APP_VERSION = '4.0.6';
 
         var CHANGELOG = [
             {
@@ -195,6 +195,16 @@
                     'Fixed: Broken duplicate-detection logic that never found existing changes',
                     'Improved: Change tracking maintains one pending change per field, preserving original baseline and compliance deadline',
                     'Removed: CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule)'
+                ]
+            },
+            {
+                version: '4.0.6',
+                date: '2025-12-18',
+                changes: [
+                    'New: Baseline & Ticket Research Report - combined PDF showing full asset baselines AND complete ticket history',
+                    'Ticket Research section documents all authorized changes that compose the baseline over time',
+                    'Sequential ticket listing with dates, ticket numbers, actions, and users for audit compliance',
+                    'Updated UI labels on Asset and Compliance pages to describe the enhanced report functionality'
                 ]
             },
             {
@@ -2413,6 +2423,16 @@ date: '2025-12-15',
                             daysInInvestigation = days + ' day' + (days !== 1 ? 's' : '') + ' in investigation';
                         }
 
+                        // Find first ticket number from this asset's changes to pre-populate "Apply to All"
+                        var assetTicketDefault = '';
+                        for (var i = 0; i < assetGroup.changes.length; i++) {
+                            var sig = assetGroup.changes[i].signature;
+                            if (investigationTickets[sig]) {
+                                assetTicketDefault = investigationTickets[sig];
+                                break;
+                            }
+                        }
+
                         html += `
                             <div class="mb-4 rounded-lg overflow-hidden bg-amber-950/40 border border-amber-600/50">
                                 <div class="bg-amber-800/40 px-4 py-3 flex items-center justify-between flex-wrap gap-3 border-b border-amber-600/40">
@@ -2424,7 +2444,7 @@ date: '2025-12-15',
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <input type="text" class="inv-asset-ticket px-2 py-1 text-xs bg-gray-900 border border-amber-500/50 rounded w-28 text-gray-200 placeholder-gray-500 focus:border-amber-400 focus:outline-none"
-                                               data-asset-id="${assetGroup.assetId}" placeholder="Ticket # for all">
+                                               data-asset-id="${assetGroup.assetId}" placeholder="Ticket # for all" value="${assetTicketDefault}">
                                         <button class="inv-apply-asset-ticket px-3 py-1.5 bg-amber-800 text-white rounded text-xs font-medium hover:bg-amber-700"
                                                 data-asset-id="${assetGroup.assetId}">Apply to All</button>
                                     </div>
@@ -2456,6 +2476,20 @@ date: '2025-12-15',
                         assetGroup.changes.forEach(function(item) {
                             var decision = reviewDecisions[item.signature] || 'pending';
                             var statusBg = decision === 'approved' ? 'bg-green-800' : decision === 'rejected' ? 'bg-red-800' : 'bg-gray-600';
+
+                            // Timer badge - always show for investigation changes
+                            var timerBadge = '';
+                            if (item.compliance_due_date) {
+                                var dueDate = new Date(item.compliance_due_date);
+                                var today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                var daysRemaining = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                                var timerClass = daysRemaining <= 0 ? 'bg-red-800 text-red-200' :
+                                                 daysRemaining <= 5 ? 'bg-orange-700 text-orange-200' :
+                                                 daysRemaining <= 10 ? 'bg-yellow-700 text-yellow-200' : 'bg-gray-600 text-gray-300';
+                                var timerText = daysRemaining <= 0 ? 'OVERDUE' : daysRemaining + 'd left';
+                                timerBadge = '<span class="px-2 py-1 text-xs font-bold rounded ' + timerClass + '">⏱ ' + timerText + '</span>';
+                            }
 
                             // Build change value display
                             var valueHtml = '';
@@ -2490,7 +2524,10 @@ date: '2025-12-15',
                             html += `
                                 <div class="bg-gray-800/50 rounded-lg p-3 border border-amber-700/30">
                                     <div class="flex justify-between items-start mb-2">
-                                        <span class="font-mono text-sm font-medium text-gray-200">${escapeHtml(formatFieldPath(item.field_path))}</span>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="font-mono text-sm font-medium text-gray-200">${escapeHtml(formatFieldPath(item.field_path))}</span>
+                                            ${timerBadge}
+                                        </div>
                                         <div class="flex items-center gap-2">
                                             <span class="px-2 py-0.5 text-xs rounded ${statusBg}">${decision}</span>
                                         </div>
@@ -3122,35 +3159,95 @@ date: '2025-12-15',
                     return;
                 }
 
+                // Helper to format values for display
+                function formatValueForApproved(val) {
+                    if (val === null || val === undefined) return '<span class="text-gray-500">(none)</span>';
+                    if (typeof val === 'object') {
+                        if (Array.isArray(val)) {
+                            if (val.length === 0) return '<span class="text-gray-500">(empty list)</span>';
+                            return val.map(function(item) {
+                                if (typeof item === 'object') {
+                                    var pairs = Object.entries(item).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+                                    return '• { ' + escapeHtml(pairs) + ' }';
+                                }
+                                return '• ' + escapeHtml(String(item));
+                            }).join('<br>');
+                        }
+                        var pairs = Object.entries(val).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+                        return escapeHtml('{ ' + pairs + ' }');
+                    }
+                    return escapeHtml(String(val));
+                }
+
                 var html = '';
                 changes.forEach(function(change) {
                     var approvedTime = change.status_changed_at ? new Date(change.status_changed_at).toLocaleString() : 'Unknown';
-                    var oldVal = change.old_value ? JSON.stringify(change.old_value) : '—';
-                    var newVal = change.new_value ? JSON.stringify(change.new_value) : '—';
-                    if (oldVal.length > 50) oldVal = oldVal.substring(0, 47) + '...';
-                    if (newVal.length > 50) newVal = newVal.substring(0, 47) + '...';
+                    var changeType = (change.change_type || 'modified').toUpperCase().replace('_', ' ');
+                    var isArrayChange = change.change_type === 'array_modified';
+
+                    // Build the change details section
+                    var detailsHtml = '';
+                    if (isArrayChange) {
+                        var itemsRemoved = change.items_removed || [];
+                        var itemsAdded = change.items_added || [];
+
+                        if (itemsRemoved.length > 0) {
+                            detailsHtml += '<div class="mt-2"><span class="text-red-400 font-medium text-xs">REMOVED (' + itemsRemoved.length + '):</span>';
+                            detailsHtml += '<div class="ml-3 mt-1 text-xs text-red-400 bg-red-900/20 p-2 rounded">';
+                            itemsRemoved.forEach(function(item) {
+                                if (typeof item === 'object') {
+                                    var pairs = Object.entries(item).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+                                    detailsHtml += '<div>− { ' + escapeHtml(pairs) + ' }</div>';
+                                } else {
+                                    detailsHtml += '<div>− ' + escapeHtml(String(item)) + '</div>';
+                                }
+                            });
+                            detailsHtml += '</div></div>';
+                        }
+
+                        if (itemsAdded.length > 0) {
+                            detailsHtml += '<div class="mt-2"><span class="text-green-400 font-medium text-xs">ADDED (' + itemsAdded.length + '):</span>';
+                            detailsHtml += '<div class="ml-3 mt-1 text-xs text-green-400 bg-green-900/20 p-2 rounded">';
+                            itemsAdded.forEach(function(item) {
+                                if (typeof item === 'object') {
+                                    var pairs = Object.entries(item).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
+                                    detailsHtml += '<div>+ { ' + escapeHtml(pairs) + ' }</div>';
+                                } else {
+                                    detailsHtml += '<div>+ ' + escapeHtml(String(item)) + '</div>';
+                                }
+                            });
+                            detailsHtml += '</div></div>';
+                        }
+                    } else {
+                        // Standard before/after display
+                        detailsHtml += '<div class="mt-2 grid grid-cols-2 gap-3">';
+                        detailsHtml += '<div><span class="text-red-400 font-medium text-xs">BEFORE:</span>';
+                        detailsHtml += '<div class="mt-1 text-xs text-red-300 bg-red-900/20 p-2 rounded break-all">' + formatValueForApproved(change.old_value) + '</div></div>';
+                        detailsHtml += '<div><span class="text-green-400 font-medium text-xs">AFTER:</span>';
+                        detailsHtml += '<div class="mt-1 text-xs text-green-300 bg-green-900/20 p-2 rounded break-all">' + formatValueForApproved(change.new_value) + '</div></div>';
+                        detailsHtml += '</div>';
+                    }
 
                     html += `
-                        <div class="bg-green-900/20 border border-green-600 rounded p-3 flex items-center justify-between">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-green-500 font-medium text-sm">${escapeHtml(change.asset_name)}</span>
-                                    <span class="text-gray-500 text-xs">•</span>
-                                    <span class="text-gray-400 text-xs">${escapeHtml(formatFieldPath(change.field_path))}</span>
+                        <div class="bg-green-900/20 border border-green-600 rounded p-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-green-500 font-medium">${escapeHtml(change.asset_name)}</span>
+                                        <span class="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs rounded">${changeType}</span>
+                                    </div>
+                                    <div class="text-sm text-white font-mono">${escapeHtml(formatFieldPath(change.field_path))}</div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        ${change.ticket_number ? '<span class="text-blue-400 font-medium">Ticket: ' + escapeHtml(change.ticket_number) + '</span> • ' : ''}
+                                        Approved ${approvedTime} by ${escapeHtml(change.status_changed_by || 'unknown')}
+                                    </div>
                                 </div>
-                                <div class="text-xs text-gray-500">
-                                    <span class="text-red-500">${escapeHtml(oldVal)}</span>
-                                    <span class="mx-1">→</span>
-                                    <span class="text-green-500">${escapeHtml(newVal)}</span>
-                                </div>
-                                <div class="text-xs text-gray-600 mt-1">
-                                    ${change.ticket_number ? '<span class="text-blue-400">Ticket: ' + escapeHtml(change.ticket_number) + '</span> • ' : ''}Approved ${approvedTime} by ${escapeHtml(change.status_changed_by || 'unknown')}
-                                </div>
+                                <button class="revert-change-btn ml-3 px-3 py-1.5 bg-amber-800 text-white rounded text-xs hover:bg-amber-700 font-medium whitespace-nowrap"
+                                        data-id="${change.id}">
+                                    ↩ Revert
+                                </button>
                             </div>
-                            <button class="revert-change-btn ml-3 px-3 py-1.5 bg-amber-800 text-white rounded text-xs hover:bg-amber-700 font-medium whitespace-nowrap"
-                                    data-id="${change.id}">
-                                ↩ Revert
-                            </button>
+                            ${detailsHtml}
                         </div>
                     `;
                 });
@@ -4056,12 +4153,28 @@ date: '2025-12-15',
                     </div>
 
                     <div class="bg-gray-700 rounded-lg shadow-md p-6 mb-6 border border-gray-700">
-                        <h3 class="text-lg font-semibold mb-4 text-white">Asset Information</h3>
-                        <div class="grid grid-cols-2 gap-4 text-sm text-gray-300">
-                            <div><span class="font-medium text-gray-400">Last Baseline Promotion:</span> ${effectiveBaseline && effectiveBaseline.baseline_promoted_at ? new Date(effectiveBaseline.baseline_promoted_at).toLocaleDateString() : 'None'}</div>
-                            <div><span class="font-medium text-gray-400">Version:</span> ${escapeHtml(asset.version || 'N/A')}</div>
-                            <div><span class="font-medium text-gray-400">State:</span> <span class="status-badge status-${asset.current_state}">${asset.current_state}</span></div>
-                            <div><span class="font-medium text-gray-400">Days in State:</span> ${asset.days_in_current_state}</div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold mb-4 text-white">Asset Information</h3>
+                                <div class="grid grid-cols-2 gap-4 text-sm text-gray-300">
+                                    <div><span class="font-medium text-gray-400">First Seen:</span> ${asset.created_at ? new Date(asset.created_at).toLocaleDateString() : 'N/A'}</div>
+                                    <div><span class="font-medium text-gray-400">Last Baseline Promotion:</span> ${effectiveBaseline && effectiveBaseline.baseline_promoted_at ? new Date(effectiveBaseline.baseline_promoted_at).toLocaleDateString() : 'None'}</div>
+                                    <div><span class="font-medium text-gray-400">State:</span> <span class="status-badge status-${asset.current_state}">${asset.current_state}</span></div>
+                                    <div><span class="font-medium text-gray-400">Days Since Last Config Upload:</span> ${asset.days_in_current_state}</div>
+                                </div>
+                            </div>
+                            <div class="ml-6 p-4 bg-gray-800 rounded-lg border border-gray-600">
+                                <h4 class="text-sm font-medium text-gray-300 mb-2">📄 Baseline & Ticket Research Report</h4>
+                                <p class="text-xs text-gray-500 mb-3">Generate a PDF showing this asset's baseline configuration and complete ticket history documenting all authorized changes over time</p>
+                                <div class="flex items-center gap-2">
+                                    <input type="date" id="historical-baseline-date"
+                                           class="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-gray-200 text-sm focus:border-blue-500 focus:outline-none"
+                                           value="${new Date().toISOString().split('T')[0]}">
+                                    <button id="generate-historical-baseline-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 text-sm font-medium whitespace-nowrap">
+                                        Generate PDF
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -4107,22 +4220,68 @@ date: '2025-12-15',
                         </div>
                     </div>
 
-                    <!-- Pending Changes Section -->
+                    <!-- Pending Changes Section - Inline Review -->
                     ${hasPendingChanges ? `
                     <div class="bg-blue-900/20 border border-blue-700 rounded-lg shadow-md p-6 mb-6">
-                        <h3 class="text-lg font-semibold mb-4 text-blue-300">Pending Changes (${effectiveBaseline.pending_changes.length})</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-blue-300">Pending Changes (${effectiveBaseline.pending_changes.length})</h3>
+                            <button id="finalize-asset-btn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600 font-medium hidden">
+                                ✓ Finalize Reviewed Changes
+                            </button>
+                        </div>
                         <div class="mb-4">
                             <p class="text-sm text-blue-300/80"><strong>⏰ Per-Change Timer:</strong> Each change has a 30-day timer from detection. Review and resolve before individual timers expire.</p>
                         </div>
-                        <div class="space-y-3">
-                            ${effectiveBaseline.pending_changes.map(function(c) {
+                        <div class="space-y-3" id="asset-pending-changes-list">
+                            ${effectiveBaseline.pending_changes.map(function(c, idx) {
                                 var enhanced = enhanceChangeWithArrayDiff(c);
-                                var statusColor = enhanced.status === 'investigation' ? 'bg-yellow-900 text-amber-400 border border-amber-700' : 'bg-blue-900 text-blue-300 border border-blue-600';
+                                var changeId = c.id || c.change_id || idx;
+                                var signature = c.change_signature || String(changeId);
+
+                                // Determine current status
+                                var currentStatus = enhanced.status || 'pending';
+                                var statusBadge = '';
+                                if (currentStatus === 'approved') {
+                                    statusBadge = '<span class="px-2 py-1 text-xs rounded bg-green-800 text-green-200">✓ Approved</span>';
+                                } else if (currentStatus === 'investigation') {
+                                    statusBadge = '<span class="px-2 py-1 text-xs rounded bg-amber-700 text-amber-200">🔍 Investigation</span>';
+                                } else {
+                                    statusBadge = '<span class="px-2 py-1 text-xs rounded bg-blue-800 text-blue-200">Pending</span>';
+                                }
+
+                                // Timer badge
+                                var timerBadge = '';
+                                if (c.compliance_due_date && currentStatus !== 'approved') {
+                                    var dueDate = new Date(c.compliance_due_date);
+                                    var today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    var daysRemaining = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                                    var timerClass = daysRemaining <= 0 ? 'bg-red-800 text-red-200' :
+                                                     daysRemaining <= 5 ? 'bg-orange-700 text-orange-200' :
+                                                     daysRemaining <= 10 ? 'bg-yellow-700 text-yellow-200' : 'bg-gray-600 text-gray-300';
+                                    var timerText = daysRemaining <= 0 ? 'OVERDUE' : daysRemaining + 'd left';
+                                    timerBadge = '<span class="px-2 py-1 text-xs font-bold rounded ' + timerClass + '">⏱ ' + timerText + '</span>';
+                                }
+
+                                // Border color based on change type
+                                var borderClass = enhanced.change_type === 'added' ? 'border-l-4 border-l-emerald-600' :
+                                                 enhanced.change_type === 'removed' ? 'border-l-4 border-l-rose-600' : 'border-l-4 border-l-sky-600';
+
+                                // Build change data for buttons
+                                var changeDataObj = {
+                                    field_path: enhanced.field_path,
+                                    change_type: enhanced.change_type,
+                                    old_value: enhanced.old_value,
+                                    new_value: enhanced.new_value,
+                                    items_added: enhanced.items_added,
+                                    items_removed: enhanced.items_removed
+                                };
+                                var changeDataB64 = btoa(encodeURIComponent(JSON.stringify(changeDataObj)));
+                                var assetDataB64 = btoa(encodeURIComponent(JSON.stringify([{asset_id: asset.id, asset_name: asset.asset_name}])));
 
                                 var valueHtml = '';
                                 if (enhanced.change_type === 'array_modified' && (enhanced.items_added || enhanced.items_removed)) {
-                                    // Show array diff view
-                                    valueHtml = '<div class="space-y-2">';
+                                    valueHtml = '<div class="space-y-2 mt-3">';
                                     if (enhanced.items_added && enhanced.items_added.length > 0) {
                                         valueHtml += '<div class="p-2 bg-green-900/30 rounded border border-green-800">';
                                         valueHtml += '<p class="text-xs font-semibold text-emerald-400 mb-1">+ Added (' + enhanced.items_added.length + '):</p>';
@@ -4141,28 +4300,52 @@ date: '2025-12-15',
                                     }
                                     valueHtml += '</div>';
                                 } else {
-                                    // Show standard current → proposed view
                                     var oldVal = enhanced.old_value !== null && enhanced.old_value !== undefined ? JSON.stringify(enhanced.old_value) : '(none)';
                                     var newVal = enhanced.new_value !== null && enhanced.new_value !== undefined ? JSON.stringify(enhanced.new_value) : '(none)';
-                                    valueHtml = '<div class="grid grid-cols-2 gap-4 text-xs">';
-                                    valueHtml += '<div class="p-2 bg-red-900/30 rounded border border-red-800"><strong class="text-red-500">Current:</strong> <code class="text-gray-300">' + escapeHtml(oldVal) + '</code></div>';
-                                    valueHtml += '<div class="p-2 bg-green-900/30 rounded border border-green-800"><strong class="text-green-500">Proposed:</strong> <code class="text-gray-300">' + escapeHtml(newVal) + '</code></div>';
+                                    valueHtml = '<div class="grid grid-cols-2 gap-4 text-xs mt-3">';
+                                    valueHtml += '<div class="p-2 bg-red-900/30 rounded border border-red-800"><strong class="text-red-400">BEFORE:</strong><div class="font-mono text-gray-300 mt-1 break-all">' + escapeHtml(oldVal) + '</div></div>';
+                                    valueHtml += '<div class="p-2 bg-green-900/30 rounded border border-green-800"><strong class="text-green-400">AFTER:</strong><div class="font-mono text-gray-300 mt-1 break-all">' + escapeHtml(newVal) + '</div></div>';
                                     valueHtml += '</div>';
                                 }
 
-                                return `
-                                <div class="p-3 bg-gray-700 rounded border border-gray-600">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <span class="font-mono text-sm font-medium text-gray-200">${escapeHtml(formatFieldPath(enhanced.field_path))}</span>
-                                        <span class="px-2 py-1 text-xs rounded ${statusColor}">${enhanced.status}</span>
-                                    </div>
-                                    ${valueHtml}
-                                </div>
-                                `;
+                                return '<div class="p-4 bg-gray-800 rounded border border-gray-700 ' + borderClass + '" data-change-id="' + changeId + '">' +
+                                    '<div class="flex justify-between items-start gap-4 mb-2">' +
+                                        '<div class="flex-1 min-w-0">' +
+                                            '<div class="flex items-center flex-wrap gap-2 mb-1">' +
+                                                '<span class="font-mono text-sm font-bold text-gray-100">' + escapeHtml(formatFieldPath(enhanced.field_path)) + '</span>' +
+                                                '<span class="text-xs px-2 py-0.5 rounded ' +
+                                                    (enhanced.change_type === 'array_modified' ? 'bg-slate-700 text-slate-200' :
+                                                     enhanced.change_type === 'added' ? 'bg-green-800 text-green-200' :
+                                                     enhanced.change_type === 'removed' ? 'bg-red-900 text-red-200' : 'bg-blue-800 text-blue-200') + '">' +
+                                                    enhanced.change_type.replace('_', ' ') + '</span>' +
+                                                statusBadge + timerBadge +
+                                            '</div>' +
+                                        '</div>' +
+                                        '<div class="flex items-center gap-2 flex-shrink-0">' +
+                                            '<input type="text" class="asset-change-ticket px-2 py-1 text-xs bg-gray-900 border border-gray-600 rounded w-24 text-gray-300 placeholder-gray-500" ' +
+                                                   'data-sig="' + signature + '" placeholder="Ticket #">' +
+                                            '<button class="asset-approve-btn px-3 py-1.5 text-xs font-medium rounded transition-colors ' +
+                                                (currentStatus === 'approved' ? 'bg-green-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-green-700 hover:text-white border border-gray-600') + '" ' +
+                                                'data-sig="' + signature + '" data-change="' + changeDataB64 + '" data-assets="' + assetDataB64 + '">Approve</button>' +
+                                            '<button class="asset-investigate-btn px-3 py-1.5 text-xs font-medium rounded transition-colors ' +
+                                                (currentStatus === 'investigation' ? 'bg-amber-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-amber-700 hover:text-white border border-gray-600') + '" ' +
+                                                'data-sig="' + signature + '" data-change="' + changeDataB64 + '" data-assets="' + assetDataB64 + '">Investigate</button>' +
+                                        '</div>' +
+                                    '</div>' +
+                                    valueHtml +
+                                '</div>';
                             }).join('')}
                         </div>
-                        <div class="mt-4">
-                            <button id="go-to-review-btn" class="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600">Go to Review</button>
+                        <div id="asset-approved-section" class="mt-4 hidden">
+                            <div class="flex items-center justify-between p-3 bg-green-900/30 border border-green-700 rounded">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-400 font-medium">✓ Approved changes ready to finalize</span>
+                                    <span id="asset-approved-count" class="px-2 py-0.5 bg-green-800 text-white text-xs rounded">0</span>
+                                </div>
+                                <button id="finalize-asset-changes-btn" class="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-600 font-medium">
+                                    Finalize Reviewed Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
                     ` : ''}
@@ -4318,6 +4501,49 @@ date: '2025-12-15',
                 render();
             });
 
+            // Historical Baseline PDF generator
+            document.getElementById('generate-historical-baseline-btn').addEventListener('click', async function() {
+                var dateInput = document.getElementById('historical-baseline-date').value;
+                if (!dateInput) {
+                    alert('Please select a date');
+                    return;
+                }
+
+                var assetName = asset.asset_name;
+                this.disabled = true;
+                this.textContent = 'Generating...';
+
+                try {
+                    var downloadUrl = '/api/reports/compliance/custom-baseline-pdf?report_date=' + encodeURIComponent(dateInput) + '&asset_names=' + encodeURIComponent(assetName);
+
+                    var response = await fetch(downloadUrl, {
+                        headers: {
+                            'Authorization': 'Bearer ' + authToken
+                        }
+                    });
+
+                    if (!response.ok) {
+                        var errorData = await response.json();
+                        throw new Error(errorData.detail || 'Failed to generate PDF');
+                    }
+
+                    var blob = await response.blob();
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = assetName.replace(/[^a-zA-Z0-9]/g, '_') + '_Baseline_' + dateInput + '.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    alert('Error generating baseline PDF: ' + err.message);
+                } finally {
+                    this.disabled = false;
+                    this.textContent = 'Generate PDF';
+                }
+            });
+
             document.getElementById('toggle-raw-config').addEventListener('click', function() {
                 var section = document.getElementById('raw-config-section');
                 var icon = document.getElementById('toggle-icon');
@@ -4440,10 +4666,140 @@ date: '2025-12-15',
                 }
             });
 
-            if (document.getElementById('go-to-review-btn')) {
-                document.getElementById('go-to-review-btn').addEventListener('click', function() {
-                    currentView = 'review';
-                    render();
+            // Asset detail inline review handlers
+            var assetApprovedCount = 0;
+            function updateAssetApprovedSection() {
+                var section = document.getElementById('asset-approved-section');
+                var countEl = document.getElementById('asset-approved-count');
+                if (section && countEl) {
+                    if (assetApprovedCount > 0) {
+                        section.classList.remove('hidden');
+                        countEl.textContent = assetApprovedCount;
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                }
+            }
+
+            document.querySelectorAll('.asset-approve-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    var signature = this.getAttribute('data-sig');
+                    var ticketInput = document.querySelector('.asset-change-ticket[data-sig="' + signature + '"]');
+                    var ticketNumber = ticketInput ? ticketInput.value.trim() : null;
+
+                    try {
+                        await api('/api/changes/bulk-review', {
+                            method: 'POST',
+                            body: {
+                                signature: signature,
+                                status: 'approved',
+                                resolution_notes: null,
+                                ticket_number: ticketNumber || null
+                            }
+                        });
+
+                        // Update button styles
+                        this.classList.remove('bg-gray-700', 'border', 'border-gray-600');
+                        this.classList.add('bg-green-700', 'text-white');
+
+                        // Update status badge in the card
+                        var card = this.closest('[data-change-id]');
+                        if (card) {
+                            var badges = card.querySelectorAll('.flex.items-center.flex-wrap.gap-2 span');
+                            badges.forEach(function(badge) {
+                                if (badge.textContent.includes('Pending') || badge.textContent.includes('Investigation')) {
+                                    badge.className = 'px-2 py-1 text-xs rounded bg-green-800 text-green-200';
+                                    badge.textContent = '✓ Approved';
+                                }
+                            });
+                        }
+
+                        assetApprovedCount++;
+                        updateAssetApprovedSection();
+                    } catch (err) {
+                        alert('Error: ' + err.message);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.asset-investigate-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    var signature = this.getAttribute('data-sig');
+                    var ticketInput = document.querySelector('.asset-change-ticket[data-sig="' + signature + '"]');
+                    var ticketNumber = ticketInput ? ticketInput.value.trim() : null;
+
+                    try {
+                        await api('/api/changes/bulk-review', {
+                            method: 'POST',
+                            body: {
+                                signature: signature,
+                                status: 'investigation',
+                                resolution_notes: null,
+                                ticket_number: ticketNumber || null
+                            }
+                        });
+
+                        // Update button styles
+                        this.classList.remove('bg-gray-700', 'border', 'border-gray-600');
+                        this.classList.add('bg-amber-700', 'text-white');
+
+                        // Reset approve button if it was clicked
+                        var card = this.closest('[data-change-id]');
+                        if (card) {
+                            var approveBtn = card.querySelector('.asset-approve-btn');
+                            if (approveBtn) {
+                                approveBtn.classList.remove('bg-green-700');
+                                approveBtn.classList.add('bg-gray-700', 'border', 'border-gray-600');
+                            }
+
+                            // Update status badge
+                            var badges = card.querySelectorAll('.flex.items-center.flex-wrap.gap-2 span');
+                            badges.forEach(function(badge) {
+                                if (badge.textContent.includes('Pending') || badge.textContent.includes('Approved')) {
+                                    badge.className = 'px-2 py-1 text-xs rounded bg-amber-700 text-amber-200';
+                                    badge.textContent = '🔍 Investigation';
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        alert('Error: ' + err.message);
+                    }
+                });
+            });
+
+            // Finalize button handler
+            var finalizeBtn = document.getElementById('finalize-asset-changes-btn');
+            if (finalizeBtn) {
+                finalizeBtn.addEventListener('click', async function() {
+                    try {
+                        var result = await api('/api/changes/finalize', { method: 'POST' });
+
+                        if (result.finalized_assets && result.finalized_assets.length > 0) {
+                            // Show the promotion summary report
+                            var report = result.promotion_summary || 'Changes finalized successfully.';
+                            showReport('Baseline Promotion Summary', report, result.audit_log_id, 'promotion');
+
+                            // Refresh the asset detail view when modal closes
+                            var reportModal = document.getElementById('report-modal');
+                            var closeHandler = function() {
+                                reportModal.classList.add('hidden');
+                                // Refresh the view
+                                selectedAsset = null;
+                                api('/api/assets/' + asset.id).then(function(updatedAsset) {
+                                    selectedAsset = updatedAsset;
+                                    render();
+                                });
+                            };
+                            document.getElementById('report-close').onclick = closeHandler;
+                            reportModal.onclick = function(e) {
+                                if (e.target === reportModal) closeHandler();
+                            };
+                        } else {
+                            alert('No approved changes to finalize.');
+                        }
+                    } catch (err) {
+                        alert('Error: ' + err.message);
+                    }
                 });
             }
 
@@ -5185,11 +5541,6 @@ date: '2025-12-15',
                 });
 
                 reviewDecisions[signature] = status;
-
-                // Enhance for report
-                var enhanced = enhanceChangeWithArrayDiff(changeData);
-                var report = generateChangeReviewReport(enhanced, assets, status, notes, ticketNumber);
-                showReport(status.charAt(0).toUpperCase() + status.slice(1) + ' Report', report);
 
                 // Re-render and restore ticket values after render completes
                 setTimeout(function() {
@@ -7049,8 +7400,8 @@ date: '2025-12-15',
                             <div class="bg-gray-800 rounded-lg p-6 border border-gray-600">
                                 <h3 class="text-lg font-semibold text-white mb-4">Reports & Tools</h3>
 
-                                <!-- Row 1: Date picker + 2 Report buttons -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                <!-- Row 1: Date picker + Baseline Report -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <!-- Date Selection -->
                                     <div class="bg-gray-700/50 rounded-lg p-4 flex flex-col">
                                         <h4 class="font-medium text-blue-400 mb-2">📅 Report Date</h4>
@@ -7058,24 +7409,15 @@ date: '2025-12-15',
                                         <input type="date" id="compliance-date" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-gray-200 text-sm" value="${new Date().toISOString().split('T')[0]}">
                                     </div>
 
-<!-- Investigation Report -->
+                                    <!-- Baseline & Ticket Research Report -->
                                     <div class="bg-gray-700/50 rounded-lg p-4 flex flex-col">
-                                        <h4 class="font-medium text-gray-300 mb-2">🔍 Investigation Report</h4>
-                                        <p class="text-xs text-gray-400 mb-3 flex-grow">Day 1, elapsed days, and all changes.</p>
-                                        <button id="generate-investigation-report-btn" class="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 text-sm font-medium">
-                                            Generate Report
-                                        </button>
-                                    </div>
-
-                                                                        <!-- Baseline Report -->
-                                    <div class="bg-gray-700/50 rounded-lg p-4 flex flex-col">
-                                        <h4 class="font-medium text-gray-300 mb-2">📋 Baseline Report</h4>
-                                        <p class="text-xs text-gray-400 mb-2">Full asset baselines for audit documentation.</p>
+                                        <h4 class="font-medium text-gray-300 mb-2">📋 Baseline & Ticket Research</h4>
+                                        <p class="text-xs text-gray-400 mb-2">Full asset baselines + ticket history showing all authorized changes that compose the baseline over time.</p>
                                         <input type="text" id="custom-baseline-assets" placeholder="Asset names (comma-separated)" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-gray-200 text-xs mb-3 focus:border-blue-500 focus:outline-none">
                                         <button id="generate-baseline-report-btn" class="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 text-sm font-medium mb-2" title="Generate TXT report for all assets">
                                             Print All Assets (TXT)
                                         </button>
-                                        <button id="generate-custom-baseline-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 text-sm font-medium" title="Generate PDF for assets specified above">
+                                        <button id="generate-custom-baseline-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 text-sm font-medium" title="Generate PDF with baseline and ticket research for specified assets">
                                             PDF by Asset Name
                                         </button>
                                     </div>
@@ -7564,44 +7906,6 @@ date: '2025-12-15',
                         }
                     });
                 }
-
-                // Event handler - Investigation Report (direct download)
-                document.getElementById('generate-investigation-report-btn').addEventListener('click', async function() {
-                    var dateInput = document.getElementById('compliance-date').value;
-                    if (!dateInput) {
-                        alert('Please select a date');
-                        return;
-                    }
-
-                    try {
-                        // Trigger direct download - the API returns a file
-                        var downloadUrl = '/api/reports/compliance/investigation-report?report_date=' + dateInput;
-
-                        // Fetch with auth header, then create blob download
-                        var response = await fetch(downloadUrl, {
-                            headers: {
-                                'Authorization': 'Bearer ' + authToken
-                            }
-                        });
-
-                        if (!response.ok) {
-                            var errorData = await response.json();
-                            throw new Error(errorData.detail || 'Failed to generate report');
-                        }
-
-                        var blob = await response.blob();
-                        var url = URL.createObjectURL(blob);
-                        var a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'Investigation_Report_' + dateInput + '.txt';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                    } catch (err) {
-                        alert('Error generating investigation report: ' + err.message);
-                    }
-                });
 
                 // Event handler - Ticket Search
                 document.getElementById('ticket-search-btn').addEventListener('click', async function() {
@@ -8686,9 +8990,8 @@ date: '2025-12-15',
                                 <p class="text-sm text-gray-400 mb-2">The Compliance page provides these reporting functions:</p>
                                 <ul class="list-disc list-inside space-y-1 text-sm text-gray-400">
                                     <li><strong class="text-slate-400">Investigation Report:</strong> Detailed report showing for each investigation: Day 1 (when started), days elapsed, days remaining, all changes under review with old/new values. Works for current or historical dates.</li>
-                                    <li><strong class="text-gray-300">Baseline Report:</strong> Full asset baseline configurations for audit documentation. Use "Print All Assets (TXT)" for all assets or "PDF by Asset Name" for specific assets.</li>
+                                    <li><strong class="text-blue-300">Baseline & Ticket Research:</strong> Combined report showing full asset baseline configurations AND the complete ticket history documenting all authorized changes that compose the baseline over time. Essential for audit documentation and CIP-010 compliance evidence.</li>
                                     <li><strong class="text-emerald-400">Investigation Closure Reports:</strong> Filter by date, search by asset name or ticket number, with individual PDF downloads (v4.0.1)</li>
-                                    <li><strong class="text-purple-400">Custom Baseline PDF:</strong> Generate PDF baseline reports for specific assets by entering comma-separated names (v4.0.1)</li>
                                 </ul>
                             </div>
 
@@ -8697,9 +9000,9 @@ date: '2025-12-15',
                                 <ol class="list-decimal list-inside space-y-1 text-sm text-gray-400">
                                     <li>Go to <strong>Compliance</strong> page</li>
                                     <li>Select a date using the date picker (defaults to today)</li>
-                                    <li>Click the desired report button</li>
-                                    
-                                    <li><strong>Print All Assets (TXT)</strong> downloads all asset baselines. <strong>PDF by Asset Name</strong> generates a PDF for specific assets</li>
+                                    <li>Enter asset names (comma-separated) for the PDF report</li>
+                                    <li><strong>Print All Assets (TXT)</strong> downloads all asset baselines as text</li>
+                                    <li><strong>PDF by Asset Name</strong> generates a Baseline & Ticket Research PDF showing baselines and the ticket history that documents all authorized changes over time</li>
                                 </ol>
                             </div>
 

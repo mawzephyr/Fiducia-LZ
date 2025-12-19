@@ -50,6 +50,7 @@ class ReportType(str, PyEnum):
     APPROVAL = "approval"
     REJECTION = "rejection"
     INVESTIGATION = "investigation"
+    FINALIZATION = "finalization"
     SCHEDULED_AGGREGATE = "scheduled_aggregate"
     SCHEDULED_PER_ASSET = "scheduled_per_asset"
     MANUAL_COMPARISON = "manual_comparison"

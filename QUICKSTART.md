@@ -469,4 +469,4 @@ For issues or feature requests:
 
 ---
 
-*Fiducia v4.0.5 - Infrastructure Baseline Management*
+*Fiducia v4.0.6 - Infrastructure Baseline Management*

@@ -1,4 +1,4 @@
-<!-- Fiducia v4.0.5 -->
+<!-- Fiducia v4.0.6 -->
 # Fiducia
 
 **Infrastructure Baseline Management & Compliance Engine**
@@ -142,11 +142,18 @@ Designed for organizations managing infrastructure baselines under NERC CIP-010 
 
 ## Changelog
 
-### v4.0.5 (2025-12-18)
+### v4.0.6 (2025-12-18)
+- **New:** Baseline & Ticket Research Report - combined PDF showing full asset baselines AND complete ticket history
+- **New:** Ticket Research section documents all authorized changes that compose the baseline over time
+- **New:** Sequential ticket listing with dates, ticket numbers, actions, and users for audit compliance
+- **Updated:** UI labels on Asset and Compliance pages to describe enhanced report functionality
 - **Fixed:** Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates
-- **Fixed:** Broken duplicate-detection logic that never found existing changes (was checking new_snapshot_id which is always unique)
-- **Improved:** Change tracking now maintains one pending change per field, updating with latest value while preserving original baseline reference and compliance deadline
-- **Removed:** CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule of 1st and 15th)
+- **Fixed:** Broken duplicate-detection logic that never found existing changes
+- **Fixed:** Investigation Closure PDF text overlapping issues (rewrote using tables)
+- **Improved:** Change tracking maintains one pending change per field, preserving original baseline and compliance deadline
+- **Improved:** Report consolidation - single report at finalization instead of two (pre/post)
+- **Improved:** Promotion summary includes full before/after data for all changes
+- **Removed:** CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule)
 
 ### v4.0.4 (2025-12-18)
 - **Fixed:** Consistent UTC timestamps throughout application (was mixing local and UTC time)

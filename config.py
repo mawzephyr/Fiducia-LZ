@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # Application Info
     APP_NAME: str = "Fiducia"
-    APP_VERSION: str = "4.0.5"
+    APP_VERSION: str = "4.0.6"
     DEBUG: bool = False
     
     # Database
