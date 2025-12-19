@@ -52,17 +52,20 @@ fiducia/
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Clone and Install Dependencies
 
 ```bash
-python -m venv venv
+git clone https://github.com/mawzephyr/Fiducia-LZ.git
+cd Fiducia-LZ
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Initialize Database
+### 2. Create Data Directory and Initialize Database
 
 ```bash
+mkdir -p data logs watch
 python cli.py init-db
 ```
 

@@ -17,11 +17,11 @@ class Settings(BaseSettings):
     
     # Database
     # Supported formats:
-    #   SQLite:     sqlite:////opt/boobytrap/data/cip010.db
+    #   SQLite:     sqlite:///./data/cip010.db (relative) or sqlite:////absolute/path/data/cip010.db
     #   PostgreSQL: postgresql://user:password@localhost:5432/cip010
     #   MySQL:      mysql+pymysql://user:password@localhost:3306/cip010
     #   SQL Server: mssql+pyodbc://user:password@localhost/cip010?driver=ODBC+Driver+17+for+SQL+Server
-    DATABASE_URL: str = "sqlite:////opt/boobytrap/data/cip010.db"
+    DATABASE_URL: str = "sqlite:///./data/cip010.db"
 
     # Connection pool settings (ignored for SQLite)
     DATABASE_POOL_SIZE: int = 5
