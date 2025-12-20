@@ -3,7 +3,7 @@ Change management routes for CIP-010 Baseline Engine.
 
 Handles the approval/rejection workflow for detected changes.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Optional
 import json
 
@@ -156,6 +156,17 @@ async def get_grouped_changes(
                 "change_ids": []
             }
         
+        # Update group's compliance_due_date to the earliest (most urgent) date
+        if change.compliance_due_date:
+            current_group_date = grouped[sig].get("compliance_due_date")
+            if current_group_date is None:
+                grouped[sig]["compliance_due_date"] = change.compliance_due_date.isoformat()
+            else:
+                # Compare and keep the earlier date
+                current_date = date.fromisoformat(current_group_date) if isinstance(current_group_date, str) else current_group_date
+                if change.compliance_due_date < current_date:
+                    grouped[sig]["compliance_due_date"] = change.compliance_due_date.isoformat()
+
         grouped[sig]["assets"].append({
             "asset_id": asset.id,
             "asset_name": asset.asset_name,
@@ -166,8 +177,8 @@ async def get_grouped_changes(
             "change_status": change.status.value if change.status else "pending",
             "compliance_due_date": change.compliance_due_date.isoformat() if change.compliance_due_date else None,
             "ticket_number": change.ticket_number,
-                    "items_added": _safe_json_loads(change.items_added) if change.items_added else None,
-                    "items_removed": _safe_json_loads(change.items_removed) if change.items_removed else None
+            "items_added": _safe_json_loads(change.items_added) if change.items_added else None,
+            "items_removed": _safe_json_loads(change.items_removed) if change.items_removed else None
         })
         grouped[sig]["change_ids"].append(change.id)
     

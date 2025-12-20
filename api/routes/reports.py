@@ -895,6 +895,19 @@ async def generate_historical_baseline_report(
                 except:
                     pass
 
+            # Get first seen dates for fields (from approved changes)
+            field_first_seen = {}
+            approved_changes = db.query(Change).filter(
+                Change.asset_id == asset.id,
+                Change.status == ChangeStatus.APPROVED
+            ).all()
+            for change in approved_changes:
+                if change.status_changed_at:
+                    field_first_seen[change.field_path] = change.status_changed_at.strftime("%Y-%m-%d")
+
+            # Default first seen date is when baseline was promoted
+            baseline_first_seen = baseline.promoted_at.strftime("%Y-%m-%d") if baseline.promoted_at else "N/A"
+
             # Parse and flatten the config
             try:
                 config = json.loads(baseline.config_json)
@@ -912,9 +925,11 @@ async def generate_historical_baseline_report(
 
                 # Get ticket for this field (fall back to baseline ticket)
                 ticket = field_tickets.get(field_path, baseline.ticket_number or "")
+                # Get first seen date for this field
+                first_seen = field_first_seen.get(field_path, baseline_first_seen)
 
                 # Output full values without truncation for audit purposes
-                report_lines.append(f"  [{ticket or 'N/A'}] {field_path}:")
+                report_lines.append(f"  [{ticket or 'N/A'}] [{first_seen}] {field_path}:")
                 report_lines.append(f"      {value}")
                 report_lines.append("")
 
@@ -1074,33 +1089,50 @@ async def generate_custom_baseline_pdf(
                     field_tickets = json.loads(baseline.field_tickets_json)
                 except:
                     pass
+
+            # Get first seen dates for fields (from approved changes)
+            field_first_seen = {}
+            approved_changes = db.query(Change).filter(
+                Change.asset_id == asset.id,
+                Change.status == ChangeStatus.APPROVED
+            ).all()
+            for change in approved_changes:
+                if change.status_changed_at:
+                    field_first_seen[change.field_path] = change.status_changed_at.strftime("%Y-%m-%d")
+
+            # Default first seen date is when baseline was promoted
+            baseline_first_seen = baseline.promoted_at.strftime("%Y-%m-%d") if baseline.promoted_at else "-"
+
             try:
                 config = json.loads(baseline.config_json)
                 flat_config = _flatten_config(config)
             except:
                 flat_config = []
-            
+
             if flat_config:
                 # Create paragraph style for wrapping text in cells
                 cell_style = ParagraphStyle(name="Cell", fontSize=7, leading=8)
                 header_style = ParagraphStyle(name="Header", fontSize=7, leading=8, textColor=colors.white)
-                
+
                 baseline_data = [[
                     Paragraph("Field", header_style),
                     Paragraph("Value", header_style),
+                    Paragraph("First Seen", header_style),
                     Paragraph("Ticket", header_style)
                 ]]
                 for entry in flat_config[:50]:  # Limit to 50 fields per asset
                     fp = entry["path"]
                     val = str(entry["value"])
+                    first_seen = field_first_seen.get(fp, baseline_first_seen)
                     tkt = field_tickets.get(fp, baseline.ticket_number or "") or "-"
                     baseline_data.append([
                         Paragraph(fp, cell_style),
                         Paragraph(val, cell_style),
+                        Paragraph(first_seen, cell_style),
                         Paragraph(tkt, cell_style)
                     ])
-                
-                baseline_table = Table(baseline_data, colWidths=[1.8*inch, 4*inch, 0.7*inch])
+
+                baseline_table = Table(baseline_data, colWidths=[1.6*inch, 3.5*inch, 0.7*inch, 0.7*inch])
                 baseline_table.setStyle(TableStyle([
                     ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.2, 0.2, 0.3)),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),

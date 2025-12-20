@@ -210,6 +210,7 @@ async def get_effective_baseline(
         "preview_if_all_approved": baseline_data["preview_if_all_approved"],
         "field_statuses": baseline_data["field_statuses"],
         "field_tickets": baseline_data["field_tickets"],
+        "field_first_seen": baseline_data["field_first_seen"],
         "pending_changes": baseline_data["pending_changes"],
         "baseline_snapshot_id": baseline_data["baseline_snapshot_id"],
         "baseline_promoted_at": baseline_data["baseline_promoted_at"],

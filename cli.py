@@ -1,4 +1,4 @@
-# Fiducia v4.0.6
+# Fiducia v4.0.7
 #!/usr/bin/env python3
 """
 CIP-010 Baseline Engine CLI

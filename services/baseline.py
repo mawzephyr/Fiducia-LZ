@@ -105,6 +105,11 @@ def compute_effective_baseline(
     if current_baseline.field_tickets_json:
         field_tickets = json.loads(current_baseline.field_tickets_json)
 
+    # Track when each field's current value was first seen
+    # Default to baseline promotion date for all fields
+    baseline_promoted_at = current_baseline.promoted_at.isoformat() if current_baseline.promoted_at else None
+    field_first_seen = {}  # Will be populated: field_path -> ISO date string
+
     # Get all changes for this asset (not deleted/finalized)
     changes = db.query(Change).filter(
         Change.asset_id == asset_id
@@ -127,6 +132,9 @@ def compute_effective_baseline(
             field_statuses[field_path] = FieldStatus.APPROVED
             if change.ticket_number:
                 field_tickets[field_path] = change.ticket_number
+            # Track when this value was first seen (when the change was approved)
+            if change.status_changed_at:
+                field_first_seen[field_path] = change.status_changed_at.isoformat()
 
         elif change.status == ChangeStatus.REJECTED:
             # Rejected - baseline value preserved (already there)
@@ -153,8 +161,9 @@ def compute_effective_baseline(
         "config": effective_config,
         "field_statuses": field_statuses if include_field_status else {},
         "field_tickets": field_tickets if include_field_status else {},
+        "field_first_seen": field_first_seen if include_field_status else {},
+        "baseline_promoted_at": baseline_promoted_at,
         "baseline_snapshot_id": current_baseline.id,
-        "baseline_promoted_at": current_baseline.promoted_at.isoformat() if current_baseline.promoted_at else None,
         "ticket_number": current_baseline.ticket_number,
         "has_pending_changes": pending_count > 0 or investigation_count > 0,
         "pending_count": pending_count,
@@ -322,6 +331,7 @@ def get_baseline_with_pending_overlay(
         "preview_if_all_approved": preview_config,
         "field_statuses": effective["field_statuses"],
         "field_tickets": effective["field_tickets"],
+        "field_first_seen": effective["field_first_seen"],
         "pending_changes": changes_detail,
         "baseline_snapshot_id": effective["baseline_snapshot_id"],
         "baseline_promoted_at": effective["baseline_promoted_at"],

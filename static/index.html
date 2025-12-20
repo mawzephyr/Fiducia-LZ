@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiducia v4.0.6</title>
+    <title>Fiducia v4.0.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -184,17 +184,18 @@
         
         var API_BASE = '';  // Change if your API is elsewhere
         var APP_NAME = 'Fiducia';
-        var APP_VERSION = '4.0.6';
+        var APP_VERSION = '4.0.7';
 
         var CHANGELOG = [
             {
-                version: '4.0.5',
-                date: '2025-12-18',
+                version: '4.0.7',
+                date: '2025-12-20',
                 changes: [
-                    'Fixed: Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates',
-                    'Fixed: Broken duplicate-detection logic that never found existing changes',
-                    'Improved: Change tracking maintains one pending change per field, preserving original baseline and compliance deadline',
-                    'Removed: CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule)'
+                    'New: "First Seen" date column in Asset View baseline table showing when each field value was first seen',
+                    'New: "First Seen" column added to Baseline PDF reports for audit documentation',
+                    'New: "First Seen" date added to text-based compliance baseline report',
+                    'Fixed: Grouped changes now show compliance timer using earliest due date across all affected assets',
+                    'Improved: Timer display consistency between grouped and asset-specific changes'
                 ]
             },
             {
@@ -205,6 +206,16 @@
                     'Ticket Research section documents all authorized changes that compose the baseline over time',
                     'Sequential ticket listing with dates, ticket numbers, actions, and users for audit compliance',
                     'Updated UI labels on Asset and Compliance pages to describe the enhanced report functionality'
+                ]
+            },
+            {
+                version: '4.0.5',
+                date: '2025-12-18',
+                changes: [
+                    'Fixed: Multiple changes to same field now properly supersede previous pending changes instead of creating duplicates',
+                    'Fixed: Broken duplicate-detection logic that never found existing changes',
+                    'Improved: Change tracking maintains one pending change per field, preserving original baseline and compliance deadline',
+                    'Removed: CIP-010 Compliance Check Schedule section from Settings (scheduler uses default schedule)'
                 ]
             },
             {
@@ -4210,6 +4221,7 @@ date: '2025-12-15',
                                     <tr>
                                         <th class="text-left p-3 font-medium text-gray-300">Field</th>
                                         <th class="text-left p-3 font-medium text-gray-300">Value</th>
+                                        <th class="text-left p-3 font-medium text-gray-300">First Seen</th>
                                         <th class="text-left p-3 font-medium w-24 text-gray-300">Status</th>
                                         <th class="text-left p-3 font-medium text-gray-300">Ticket #</th>
                                     </tr>
@@ -4428,7 +4440,9 @@ date: '2025-12-15',
             var baselineConfig = effectiveBaseline ? effectiveBaseline.current_baseline : asset.current_config || {};
             var flatConfig = flattenObject(baselineConfig);
             var fieldTickets = effectiveBaseline ? (effectiveBaseline.field_tickets || {}) : {};
+            var fieldFirstSeen = effectiveBaseline ? (effectiveBaseline.field_first_seen || {}) : {};
             var baselineTicket = effectiveBaseline ? effectiveBaseline.ticket_number : null;
+            var baselinePromotedAt = effectiveBaseline ? effectiveBaseline.baseline_promoted_at : null;
 
             flatConfig.forEach(function(entry) {
                 var status = fieldStatuses[entry.path] || 'baseline';
@@ -4456,6 +4470,12 @@ date: '2025-12-15',
                     ? '<span class="text-xs text-blue-300">' + escapeHtml(fieldTicket) + '</span>'
                     : '<span class="text-gray-500">—</span>';
 
+                // Get first seen date for this field (from approved change, or fall back to baseline promotion date)
+                var firstSeenDate = fieldFirstSeen[entry.path] || baselinePromotedAt;
+                var firstSeenDisplay = firstSeenDate
+                    ? '<span class="text-xs text-gray-400">' + new Date(firstSeenDate).toLocaleDateString() + '</span>'
+                    : '<span class="text-gray-500">—</span>';
+
                 var row = document.createElement('tr');
                 row.className = 'border-t hover:bg-gray-600';
                 var isTruncated = isValueTruncated(entry.value);
@@ -4471,6 +4491,7 @@ date: '2025-12-15',
                                   data-full-value="${escapeAttr(fullValue)}"
                                   data-field="${escapeAttr(entry.path)}">${escapeHtml(displayValue)} <span class="text-blue-400 text-xs">[click to expand]</span></code>
                         </td>
+                        <td class="p-3">${firstSeenDisplay}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3">${ticketDisplay}</td>
                     `;
@@ -4478,6 +4499,7 @@ date: '2025-12-15',
                     row.innerHTML = `
                         <td class="p-3 font-mono text-xs">${escapeHtml(entry.path)}</td>
                         <td class="p-3"><code class="text-xs bg-gray-700 px-1 rounded">${escapeHtml(displayValue)}</code></td>
+                        <td class="p-3">${firstSeenDisplay}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3">${ticketDisplay}</td>
                     `;
